@@ -1,0 +1,25 @@
+{
+  "name": "mcp_testserver",
+  "version": "1.0.0",
+  "description": "Model Context Protocol server for analyzing Playwright test failures",
+  "main": "dist/server.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "ts-node src/server.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.18.0",
+    "@types/node": "^20.11.24",
+    "dotenv": "^16.4.5",
+    "playwright": "^1.42.1",
+    "typescript": "^5.3.3"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.2"
+  }
+}
