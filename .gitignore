@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.env
+*.png
+sample-*.html
+sample-*.json
+take-screenshot.js
+create-test-image.js

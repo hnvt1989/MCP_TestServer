@@ -2,6 +2,7 @@ import { Anthropic } from '@anthropic-ai/sdk';
 import dotenv from 'dotenv';
 import { TestResult, TestFailure } from './types';
 import * as readline from 'readline';
+import * as fs from 'fs';
 
 dotenv.config();
 
@@ -10,17 +11,36 @@ const anthropic = new Anthropic({
   apiKey: process.env.CLAUDE_API_KEY || '',
 });
 
-async function analyzeFailure(failure: TestFailure) {
-  const message = `Analyze this Playwright test failure and determine if it's likely an actual application error or a potential test flakiness/infrastructure issue. Consider the error message, stack trace, and test context:
+async function analyzeFailure(failure: TestFailure, screenshotPath?: string) {
+  let content: any[] = [
+    {
+      type: 'text',
+      text: `Analyze this Playwright test failure and determine if it's likely an actual application error or a potential test flakiness/infrastructure issue. Consider the error message, stack trace, test context, and screenshot if provided:
 
 Test: ${failure.testName}
 Error: ${failure.error}
-Stack: ${failure.stack}`;
+Stack: ${failure.stack}`
+    }
+  ];
+
+  // If screenshot path is provided and exists, add it to the content
+  if (screenshotPath && fs.existsSync(screenshotPath)) {
+    const imageBuffer = fs.readFileSync(screenshotPath);
+    const base64Image = imageBuffer.toString('base64');
+    content.unshift({
+      type: 'image',
+      source: {
+        type: 'base64',
+        media_type: 'image/png',
+        data: base64Image
+      }
+    });
+  }
 
   const response = await anthropic.messages.create({
     model: 'claude-3-opus-20240229',
     max_tokens: 1000,
-    messages: [{ role: 'user', content: message }],
+    messages: [{ role: 'user', content }],
   });
 
   return {
@@ -31,14 +51,16 @@ Stack: ${failure.stack}`;
 
 async function processInput(input: string) {
   try {
-    const testResults: TestResult = JSON.parse(input);
+    const inputData = JSON.parse(input);
+    const testResults: TestResult = inputData.testResults;
+    const screenshotPath = inputData.screenshotPath;
     
     if (!testResults.failures || testResults.failures.length === 0) {
       console.log(JSON.stringify({ message: 'No failures to analyze' }));
       return;
     }
 
-    const analysisPromises = testResults.failures.map(analyzeFailure);
+    const analysisPromises = testResults.failures.map(failure => analyzeFailure(failure, screenshotPath));
     const analyses = await Promise.all(analysisPromises);
     console.log(JSON.stringify({ analyses }, null, 2));
   } catch (error) {
