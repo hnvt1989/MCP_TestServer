@@ -15,8 +15,10 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.18.0",
     "@types/node": "^20.11.24",
+    "canvas": "^3.1.0",
     "dotenv": "^16.4.5",
     "playwright": "^1.42.1",
+    "puppeteer": "^24.6.0",
     "typescript": "^5.3.3"
   },
   "devDependencies": {
