@@ -48,22 +48,41 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const sdk_1 = require("@anthropic-ai/sdk");
 const dotenv_1 = __importDefault(require("dotenv"));
 const readline = __importStar(require("readline"));
+const fs = __importStar(require("fs"));
 dotenv_1.default.config();
 // Initialize Claude client
 const anthropic = new sdk_1.Anthropic({
     apiKey: process.env.CLAUDE_API_KEY || '',
 });
-function analyzeFailure(failure) {
+function analyzeFailure(failure, screenshotPath) {
     return __awaiter(this, void 0, void 0, function* () {
-        const message = `Analyze this Playwright test failure and determine if it's likely an actual application error or a potential test flakiness/infrastructure issue. Consider the error message, stack trace, and test context:
+        let content = [
+            {
+                type: 'text',
+                text: `Analyze this Playwright test failure and determine if it's likely an actual application error or a potential test flakiness/infrastructure issue. Consider the error message, stack trace, test context, and screenshot if provided:
 
 Test: ${failure.testName}
 Error: ${failure.error}
-Stack: ${failure.stack}`;
+Stack: ${failure.stack}`
+            }
+        ];
+        // If screenshot path is provided and exists, add it to the content
+        if (screenshotPath && fs.existsSync(screenshotPath)) {
+            const imageBuffer = fs.readFileSync(screenshotPath);
+            const base64Image = imageBuffer.toString('base64');
+            content.unshift({
+                type: 'image',
+                source: {
+                    type: 'base64',
+                    media_type: 'image/png',
+                    data: base64Image
+                }
+            });
+        }
         const response = yield anthropic.messages.create({
             model: 'claude-3-opus-20240229',
             max_tokens: 1000,
-            messages: [{ role: 'user', content: message }],
+            messages: [{ role: 'user', content }],
         });
         return {
             testName: failure.testName,
@@ -74,12 +93,14 @@ Stack: ${failure.stack}`;
 function processInput(input) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const testResults = JSON.parse(input);
+            const inputData = JSON.parse(input);
+            const testResults = inputData.testResults;
+            const screenshotPath = inputData.screenshotPath;
             if (!testResults.failures || testResults.failures.length === 0) {
                 console.log(JSON.stringify({ message: 'No failures to analyze' }));
                 return;
             }
-            const analysisPromises = testResults.failures.map(analyzeFailure);
+            const analysisPromises = testResults.failures.map(failure => analyzeFailure(failure, screenshotPath));
             const analyses = yield Promise.all(analysisPromises);
             console.log(JSON.stringify({ analyses }, null, 2));
         }

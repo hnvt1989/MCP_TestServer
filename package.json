@@ -1,7 +1,7 @@
 {
-  "name": "mcp_testserver",
+  "name": "testanalyzer",
   "version": "1.0.0",
-  "description": "Model Context Protocol server for analyzing Playwright test failures",
+  "description": "TestAnalyzer server for analyzing Playwright test failures",
   "main": "dist/server.js",
   "scripts": {
     "build": "tsc",

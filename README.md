@@ -1,6 +1,6 @@
-# MCP Test Server
+# TestAnalyzer
 
-A Model Context Protocol server that analyzes Playwright test failures using Claude AI.
+A TestAnalyzer server that analyzes Playwright test failures using Claude AI.
 
 ## Features
 - Accepts Playwright test results
